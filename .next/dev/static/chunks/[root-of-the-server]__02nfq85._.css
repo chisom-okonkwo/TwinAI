@@ -143,6 +143,7 @@
       --tw-leading: initial;
       --tw-font-weight: initial;
       --tw-tracking: initial;
+      --tw-duration: initial;
       --tw-blur: initial;
       --tw-brightness: initial;
       --tw-contrast: initial;
@@ -162,6 +163,7 @@
 
 @layer theme {
   :root, :host {
+    --font-mono: var(--font-geist-mono);
     --color-zinc-50: #fafafa;
     --color-zinc-400: #9f9fa9;
     --color-zinc-600: #52525c;
@@ -172,6 +174,10 @@
     --container-xs: 20rem;
     --container-md: 28rem;
     --container-3xl: 48rem;
+    --text-xs: .75rem;
+    --text-xs--line-height: calc(1 / .75);
+    --text-sm: .875rem;
+    --text-sm--line-height: calc(1.25 / .875);
     --text-base: 1rem;
     --text-base--line-height: calc(1.5 / 1);
     --text-lg: 1.125rem;
@@ -181,6 +187,9 @@
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
     --tracking-tight: -.025em;
+    --leading-relaxed: 1.625;
+    --radius-lg: .5rem;
+    --radius-2xl: 1rem;
     --default-transition-duration: .15s;
     --default-transition-timing-function: cubic-bezier(.4, 0, .2, 1);
     --default-font-family: var(--font-geist-sans);
@@ -446,6 +455,42 @@
 @layer components;
 
 @layer utilities {
+  .visible {
+    visibility: visible;
+  }
+
+  .absolute {
+    position: absolute;
+  }
+
+  .relative {
+    position: relative;
+  }
+
+  .right-1 {
+    right: calc(var(--spacing) * 1);
+  }
+
+  .-bottom-5 {
+    bottom: calc(var(--spacing) * -5);
+  }
+
+  .left-1 {
+    left: calc(var(--spacing) * 1);
+  }
+
+  .my-3 {
+    margin-block: calc(var(--spacing) * 3);
+  }
+
+  .mb-3 {
+    margin-bottom: calc(var(--spacing) * 3);
+  }
+
+  .block {
+    display: block;
+  }
+
   .flex {
     display: flex;
   }
@@ -468,6 +513,10 @@
 
   .max-w-3xl {
     max-width: var(--container-3xl);
+  }
+
+  .max-w-\[85\%\] {
+    max-width: 85%;
   }
 
   .max-w-md {
@@ -498,6 +547,14 @@
     justify-content: center;
   }
 
+  .justify-end {
+    justify-content: flex-end;
+  }
+
+  .justify-start {
+    justify-content: flex-start;
+  }
+
   .gap-2 {
     gap: calc(var(--spacing) * 2);
   }
@@ -510,8 +567,24 @@
     gap: calc(var(--spacing) * 6);
   }
 
+  .overflow-hidden {
+    overflow: hidden;
+  }
+
+  .rounded {
+    border-radius: .25rem;
+  }
+
+  .rounded-2xl {
+    border-radius: var(--radius-2xl);
+  }
+
   .rounded-full {
     border-radius: 3.40282e38px;
+  }
+
+  .rounded-lg {
+    border-radius: var(--radius-lg);
   }
 
   .border {
@@ -546,6 +619,22 @@
     background-color: var(--color-zinc-50);
   }
 
+  .px-1 {
+    padding-inline: calc(var(--spacing) * 1);
+  }
+
+  .px-2 {
+    padding-inline: calc(var(--spacing) * 2);
+  }
+
+  .px-3 {
+    padding-inline: calc(var(--spacing) * 3);
+  }
+
+  .px-4 {
+    padding-inline: calc(var(--spacing) * 4);
+  }
+
   .px-5 {
     padding-inline: calc(var(--spacing) * 5);
   }
@@ -554,12 +643,28 @@
     padding-inline: calc(var(--spacing) * 16);
   }
 
+  .py-0\.5 {
+    padding-block: calc(var(--spacing) * .5);
+  }
+
+  .py-1 {
+    padding-block: calc(var(--spacing) * 1);
+  }
+
+  .py-3 {
+    padding-block: calc(var(--spacing) * 3);
+  }
+
   .py-32 {
     padding-block: calc(var(--spacing) * 32);
   }
 
   .text-center {
     text-align: center;
+  }
+
+  .font-mono {
+    font-family: var(--font-geist-mono);
   }
 
   .font-sans {
@@ -581,6 +686,20 @@
     line-height: var(--tw-leading, var(--text-lg--line-height));
   }
 
+  .text-sm {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+  }
+
+  .text-xs {
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+
+  .text-\[11px\] {
+    font-size: 11px;
+  }
+
   .leading-8 {
     --tw-leading: calc(var(--spacing) * 8);
     line-height: calc(var(--spacing) * 8);
@@ -589,6 +708,11 @@
   .leading-10 {
     --tw-leading: calc(var(--spacing) * 10);
     line-height: calc(var(--spacing) * 10);
+  }
+
+  .leading-relaxed {
+    --tw-leading: var(--leading-relaxed);
+    line-height: var(--leading-relaxed);
   }
 
   .font-medium {
@@ -604,6 +728,10 @@
   .tracking-tight {
     --tw-tracking: var(--tracking-tight);
     letter-spacing: var(--tracking-tight);
+  }
+
+  .whitespace-nowrap {
+    white-space: nowrap;
   }
 
   .text-background {
@@ -622,15 +750,51 @@
     color: var(--color-zinc-950);
   }
 
+  .underline {
+    text-decoration-line: underline;
+  }
+
   .antialiased {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  .opacity-0 {
+    opacity: 0;
+  }
+
+  .transition {
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
 
   .transition-colors {
     transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+
+  .transition-opacity {
+    transition-property: opacity;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+
+  .duration-150 {
+    --tw-duration: .15s;
+    transition-duration: .15s;
+  }
+
+  .select-none {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  @media (hover: hover) {
+    .group-hover\:opacity-100:is(:where(.group):hover *) {
+      opacity: 1;
+    }
   }
 
   @media (hover: hover) {
@@ -678,6 +842,12 @@
   @media (min-width: 48rem) {
     .md\:w-\[158px\] {
       width: 158px;
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .md\:max-w-\[72\%\] {
+      max-width: 72%;
     }
   }
 
@@ -770,6 +940,11 @@ body {
 }
 
 @property --tw-tracking {
+  syntax: "*";
+  inherits: false
+}
+
+@property --tw-duration {
   syntax: "*";
   inherits: false
 }
