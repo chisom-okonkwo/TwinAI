@@ -15,20 +15,33 @@ export default function ChatWindow({ messages, isStreaming }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showFab, setShowFab] = useState(false);
 
-  // Auto-scroll to bottom when messages change
+  // True when the user has manually scrolled away from the bottom
+  const userScrolledAwayRef = useRef(false);
+
+  // New message added → reset user-scroll state, smooth scroll to bottom
   useEffect(() => {
+    userScrolledAwayRef.current = false;
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-  // Show FAB when user has scrolled up more than 200px
+  // Streaming tokens → instant scroll on every content update, unless user scrolled away
+  useEffect(() => {
+    if (!isStreaming || userScrolledAwayRef.current) return;
+    const el = scrollContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages, isStreaming]);
+
+  // Track scroll position: update FAB visibility + user-scroll intent
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    userScrolledAwayRef.current = distanceFromBottom > 100;
     setShowFab(distanceFromBottom > 200);
   }, []);
 
   function scrollToBottom() {
+    userScrolledAwayRef.current = false;
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 

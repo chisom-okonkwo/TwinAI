@@ -1,65 +1,117 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useChat } from "@/hooks/useChat";
+import ChatWindow from "@/components/ChatWindow";
+import ChatInput from "@/components/ChatInput";
+import Sidebar from "@/components/Sidebar";
+
+const SIDEBAR_WIDTH = 280;
 
 export default function Home() {
+  const { messages, isStreaming, sendMessage, cancelStream, newChat } =
+    useChat();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    // Full-viewport shell
+    <div
+      className="flex h-screen overflow-hidden"
+      style={{ background: "var(--bg-base, #0D0D1A)" }}
+    >
+      {/* ── Desktop sidebar ─────────────────────────────────────── */}
+      <motion.aside
+        animate={{ width: sidebarOpen ? SIDEBAR_WIDTH : 0 }}
+        transition={{ type: "spring", stiffness: 260, damping: 30 }}
+        className="hidden md:flex flex-col shrink-0 overflow-hidden"
+        style={{
+          background: "var(--bg-surface, #1A1A2E)",
+          borderRight: sidebarOpen ? "1px solid var(--border, #2A2A44)" : "none",
+        }}
+      >
+        <Sidebar isOpen={sidebarOpen} onNewChat={newChat} />
+      </motion.aside>
+
+      {/* ── Mobile drawer ────────────────────────────────────────── */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-20 md:hidden"
+              style={{ background: "rgba(0,0,0,0.6)" }}
+              onClick={() => setSidebarOpen(false)}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+            {/* Drawer panel */}
+            <motion.aside
+              key="drawer"
+              initial={{ x: -SIDEBAR_WIDTH }}
+              animate={{ x: 0 }}
+              exit={{ x: -SIDEBAR_WIDTH }}
+              transition={{ type: "spring", stiffness: 260, damping: 30 }}
+              className="fixed top-0 left-0 h-full z-30 flex flex-col md:hidden"
+              style={{
+                width: SIDEBAR_WIDTH,
+                background: "var(--bg-surface, #1A1A2E)",
+                borderRight: "1px solid var(--border, #2A2A44)",
+              }}
+            >
+              <Sidebar
+                isOpen={sidebarOpen}
+                onNewChat={() => {
+                  newChat();
+                  setSidebarOpen(false);
+                }}
+              />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Main column ──────────────────────────────────────────── */}
+      <div className="flex flex-col flex-1 min-w-0 h-full">
+        {/* Top bar */}
+        <header
+          className="flex items-center gap-3 px-4 py-3 shrink-0"
+          style={{ borderBottom: "1px solid var(--border, #2A2A44)" }}
+        >
+          <button
+            onClick={() => setSidebarOpen((v) => !v)}
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors"
+            style={{ color: "var(--text-muted, #6B7A99)" }}
+            aria-label="Toggle sidebar"
           >
-            Documentation
-          </a>
+            ☰
+          </button>
+          <span
+            className="text-sm font-medium"
+            style={{ color: "var(--text-muted, #6B7A99)" }}
+          >
+            TwinAI
+          </span>
+        </header>
+
+        {/* Message list — fills remaining height */}
+        <div className="flex flex-col flex-1 min-h-0 w-full max-w-[720px] mx-auto px-2">
+          <ChatWindow messages={messages} isStreaming={isStreaming} />
+
+          {/* Sticky input */}
+          <div className="shrink-0 pb-4 pt-2">
+            <ChatInput
+              onSend={(content) => void sendMessage(content)}
+              isStreaming={isStreaming}
+              onCancel={cancelStream}
+            />
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
