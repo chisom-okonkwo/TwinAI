@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { OllamaMessage, StreamChunk } from "@/lib/types";
+import { createOllamaRequest } from "@/lib/ollama";
 
 // ── Request body shape ──
 type ChatRequestBody = {
@@ -50,19 +51,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const { messages, model, systemPrompt } = body;
 
-  // Prepend system message if a persona prompt was provided
-  const ollamaMessages: OllamaMessage[] = systemPrompt
-    ? [{ role: "system", content: systemPrompt }, ...messages]
-    : messages;
-
   const baseUrl =
     process.env.OLLAMA_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:11434";
 
-  const ollamaPayload = {
-    model,
-    messages: ollamaMessages,
-    stream: true,
-  };
+  const ollamaPayload = createOllamaRequest(messages, model, systemPrompt);
 
   // Fetch from Ollama
   let ollamaResponse: Response;
