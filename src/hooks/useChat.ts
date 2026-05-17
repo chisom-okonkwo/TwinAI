@@ -1,15 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Message, StreamChunk } from "@/lib/types";
+import type { Message, Persona, StreamChunk } from "@/lib/types";
+import { DEFAULT_PERSONAS } from "@/lib/utils";
 
 type UseChatReturn = {
   messages: Message[];
   isStreaming: boolean;
   error: string | null;
   selectedModel: string;
+  selectedPersona: Persona;
   currentChatId: string;
   setSelectedModel: (model: string) => void;
+  setPersona: (persona: Persona) => void;
   sendMessage: (content: string) => Promise<void>;
   cancelStream: () => void;
   newChat: () => void;
@@ -20,6 +23,7 @@ export function useChat(): UseChatReturn {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState("gemma3:4b");
+  const [selectedPersona, setPersona] = useState<Persona>(DEFAULT_PERSONAS[0]);
   const [currentChatId, setCurrentChatId] = useState<string>(() =>
     crypto.randomUUID()
   );
@@ -65,7 +69,14 @@ export function useChat(): UseChatReturn {
       setMessages((prev) => [...prev, userMessage]);
 
       // Snapshot current messages + new user turn for the request
+      // Prepend the active persona's system prompt if set
+      const systemMessage =
+        selectedPersona.systemPrompt.trim().length > 0
+          ? [{ role: "system", content: selectedPersona.systemPrompt }]
+          : [];
+
       const messagesForRequest = [
+        ...systemMessage,
         ...messagesRef.current.map(({ role, content: c }) => ({
           role,
           content: c,
@@ -178,7 +189,7 @@ export function useChat(): UseChatReturn {
         abortControllerRef.current = null;
       }
     },
-    [selectedModel]
+    [selectedModel, selectedPersona]
   );
 
   return {
@@ -186,8 +197,10 @@ export function useChat(): UseChatReturn {
     isStreaming,
     error,
     selectedModel,
+    selectedPersona,
     currentChatId,
     setSelectedModel,
+    setPersona,
     sendMessage,
     cancelStream,
     newChat,

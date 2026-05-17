@@ -616,6 +616,12 @@
     gap: calc(var(--spacing) * 3);
   }
 
+  .truncate {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
   .overflow-hidden {
     overflow: hidden;
   }
