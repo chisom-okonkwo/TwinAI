@@ -95,16 +95,7 @@ function useChat() {
     const [currentChatId, setCurrentChatId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({
         "useChat.useState": ()=>crypto.randomUUID()
     }["useChat.useState"]);
-    const [allChats, setAllChats] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({
-        "useChat.useState": ()=>{
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                return raw ? JSON.parse(raw) : [];
-            } catch  {
-                return [];
-            }
-        }
-    }["useChat.useState"]);
+    const [allChats, setAllChats] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
     // Refs so callbacks never go stale without needing broad dep arrays
     const messagesRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])([]);
     const isStreamingRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(false);
@@ -134,6 +125,21 @@ function useChat() {
     }["useChat.useEffect"], [
         currentChatId
     ]);
+    // Hydrate allChats from localStorage after first client render
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "useChat.useEffect": ()=>{
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    setAllChats(parsed);
+                    allChatsRef.current = parsed;
+                }
+            } catch  {
+            // keep []
+            }
+        }
+    }["useChat.useEffect"], []);
     // ── persistChats ─────────────────────────────────────────────────────────────
     const persistChats = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "useChat.useCallback[persistChats]": (updatedChats)=>{
@@ -402,7 +408,7 @@ function useChat() {
         deleteChat
     };
 }
-_s(useChat, "GI2azampA3UyziQkL7vvrgnYRFU=");
+_s(useChat, "pCcYHCSGwl7RUBy9vIvZjF6GB+g=");
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
 }

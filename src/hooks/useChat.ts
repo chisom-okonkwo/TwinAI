@@ -33,14 +33,7 @@ export function useChat(): UseChatReturn {
   const [currentChatId, setCurrentChatId] = useState<string>(() =>
     crypto.randomUUID()
   );
-  const [allChats, setAllChats] = useState<Chat[]>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as Chat[]) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [allChats, setAllChats] = useState<Chat[]>([]);
 
   // Refs so callbacks never go stale without needing broad dep arrays
   const messagesRef = useRef<Message[]>([]);
@@ -60,6 +53,20 @@ export function useChat(): UseChatReturn {
   useEffect(() => {
     currentChatIdRef.current = currentChatId;
   }, [currentChatId]);
+
+  // Hydrate allChats from localStorage after first client render
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Chat[];
+        setAllChats(parsed);
+        allChatsRef.current = parsed;
+      }
+    } catch {
+      // keep []
+    }
+  }, []);
 
   // ── persistChats ─────────────────────────────────────────────────────────────
   const persistChats = useCallback((updatedChats: Chat[]): void => {
