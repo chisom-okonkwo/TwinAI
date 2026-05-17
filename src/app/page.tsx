@@ -10,8 +10,16 @@ import Sidebar from "@/components/Sidebar";
 const SIDEBAR_WIDTH = 280;
 
 export default function Home() {
-  const { messages, isStreaming, sendMessage, cancelStream, newChat } =
-    useChat();
+  const {
+    messages,
+    isStreaming,
+    sendMessage,
+    cancelStream,
+    newChat,
+    selectedModel,
+    selectedPersona,
+    setPersona,
+  } = useChat();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
@@ -30,7 +38,19 @@ export default function Home() {
           borderRight: sidebarOpen ? "1px solid var(--border, #2A2A44)" : "none",
         }}
       >
-        <Sidebar isOpen={sidebarOpen} onNewChat={newChat} />
+        <Sidebar
+          isOpen={sidebarOpen}
+          chats={[]}
+          activePersona={selectedPersona}
+          activeModel={selectedModel}
+          activeChatId=""
+          models={[]}
+          onNewChat={newChat}
+          onSelectChat={() => {}}
+          onDeleteChat={() => {}}
+          onSelectPersona={setPersona}
+          onSelectModel={() => {}}
+        />
       </motion.aside>
 
       {/* ── Mobile drawer ────────────────────────────────────────── */}
@@ -65,10 +85,19 @@ export default function Home() {
             >
               <Sidebar
                 isOpen={sidebarOpen}
+                chats={[]}
+                activePersona={selectedPersona}
+                activeModel={selectedModel}
+                activeChatId=""
+                models={[]}
                 onNewChat={() => {
                   newChat();
                   setSidebarOpen(false);
                 }}
+                onSelectChat={() => {}}
+                onDeleteChat={() => {}}
+                onSelectPersona={setPersona}
+                onSelectModel={() => {}}
               />
             </motion.aside>
           </>
