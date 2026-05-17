@@ -84,6 +84,7 @@ var _s = __turbopack_context__.k.signature();
 "use client";
 ;
 ;
+const STORAGE_KEY = "twinai-chats";
 function useChat() {
     _s();
     const [messages, setMessages] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
@@ -94,17 +95,89 @@ function useChat() {
     const [currentChatId, setCurrentChatId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({
         "useChat.useState": ()=>crypto.randomUUID()
     }["useChat.useState"]);
+    const [allChats, setAllChats] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({
+        "useChat.useState": ()=>{
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch  {
+                return [];
+            }
+        }
+    }["useChat.useState"]);
     // Refs so callbacks never go stale without needing broad dep arrays
     const messagesRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])([]);
     const isStreamingRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(false);
     const abortControllerRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
-    // Keep messagesRef in sync
+    const saveTimerRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
+    const allChatsRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(allChats);
+    const currentChatIdRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(currentChatId);
+    // Keep refs in sync
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "useChat.useEffect": ()=>{
             messagesRef.current = messages;
         }
     }["useChat.useEffect"], [
         messages
+    ]);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "useChat.useEffect": ()=>{
+            allChatsRef.current = allChats;
+        }
+    }["useChat.useEffect"], [
+        allChats
+    ]);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "useChat.useEffect": ()=>{
+            currentChatIdRef.current = currentChatId;
+        }
+    }["useChat.useEffect"], [
+        currentChatId
+    ]);
+    // ── persistChats ─────────────────────────────────────────────────────────────
+    const persistChats = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "useChat.useCallback[persistChats]": (updatedChats)=>{
+            setAllChats(updatedChats);
+            if (saveTimerRef.current !== null) clearTimeout(saveTimerRef.current);
+            saveTimerRef.current = setTimeout({
+                "useChat.useCallback[persistChats]": ()=>{
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedChats));
+                }
+            }["useChat.useCallback[persistChats]"], 300);
+        }
+    }["useChat.useCallback[persistChats]"], []);
+    // ── buildAndSaveChat ──────────────────────────────────────────────────────────
+    const buildAndSaveChat = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "useChat.useCallback[buildAndSaveChat]": ()=>{
+            const currentMessages = messagesRef.current;
+            const chatId = currentChatIdRef.current;
+            const existingChat = allChatsRef.current.find({
+                "useChat.useCallback[buildAndSaveChat].existingChat": (c)=>c.id === chatId
+            }["useChat.useCallback[buildAndSaveChat].existingChat"]);
+            const firstUserMessage = currentMessages.find({
+                "useChat.useCallback[buildAndSaveChat].firstUserMessage": (m)=>m.role === "user"
+            }["useChat.useCallback[buildAndSaveChat].firstUserMessage"]);
+            const chat = {
+                id: chatId,
+                title: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["generateChatTitle"])(firstUserMessage?.content ?? "New chat"),
+                messages: currentMessages,
+                personaId: selectedPersona.id,
+                model: selectedModel,
+                createdAt: existingChat?.createdAt ?? Date.now(),
+                updatedAt: Date.now()
+            };
+            const updated = existingChat ? allChatsRef.current.map({
+                "useChat.useCallback[buildAndSaveChat]": (c)=>c.id === chatId ? chat : c
+            }["useChat.useCallback[buildAndSaveChat]"]) : [
+                ...allChatsRef.current,
+                chat
+            ];
+            persistChats(updated);
+        }
+    }["useChat.useCallback[buildAndSaveChat]"], [
+        selectedModel,
+        selectedPersona,
+        persistChats
     ]);
     // ── cancelStream ────────────────────────────────────────────────────────────
     const cancelStream = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
@@ -122,6 +195,41 @@ function useChat() {
             setCurrentChatId(crypto.randomUUID());
         }
     }["useChat.useCallback[newChat]"], []);
+    // ── loadChat ──────────────────────────────────────────────────────────────────
+    const loadChat = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "useChat.useCallback[loadChat]": (id)=>{
+            const chat = allChatsRef.current.find({
+                "useChat.useCallback[loadChat].chat": (c)=>c.id === id
+            }["useChat.useCallback[loadChat].chat"]);
+            if (!chat) return;
+            setMessages(chat.messages);
+            setSelectedModel(chat.model);
+            setCurrentChatId(chat.id);
+            const persona = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["DEFAULT_PERSONAS"].find({
+                "useChat.useCallback[loadChat]": (p)=>p.id === chat.personaId
+            }["useChat.useCallback[loadChat]"]) ?? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["DEFAULT_PERSONAS"][0];
+            setPersona(persona);
+        }
+    }["useChat.useCallback[loadChat]"], []);
+    // ── deleteChat ────────────────────────────────────────────────────────────────
+    const deleteChat = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "useChat.useCallback[deleteChat]": (id)=>{
+            const filtered = allChatsRef.current.filter({
+                "useChat.useCallback[deleteChat].filtered": (c)=>c.id !== id
+            }["useChat.useCallback[deleteChat].filtered"]);
+            persistChats(filtered);
+            if (id === currentChatIdRef.current) newChat();
+        }
+    }["useChat.useCallback[deleteChat]"], [
+        persistChats,
+        newChat
+    ]);
+    // ── setModel ──────────────────────────────────────────────────────────────────
+    const setModel = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "useChat.useCallback[setModel]": (model)=>{
+            setSelectedModel(model);
+        }
+    }["useChat.useCallback[setModel]"], []);
     // ── sendMessage ──────────────────────────────────────────────────────────────
     const sendMessage = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "useChat.useCallback[sendMessage]": async (content)=>{
@@ -241,6 +349,7 @@ function useChat() {
                                 } : msg
                         }["useChat.useCallback[sendMessage]"])
                 }["useChat.useCallback[sendMessage]"]);
+                buildAndSaveChat();
             } catch (err) {
                 if (err instanceof Error && err.name === "AbortError") {
                     // User cancelled — freeze the assistant message as-is
@@ -253,6 +362,7 @@ function useChat() {
                             }["useChat.useCallback[sendMessage]"])
                     }["useChat.useCallback[sendMessage]"]);
                 } else {
+                    buildAndSaveChat();
                     const message = err instanceof Error ? err.message : "An unknown error occurred.";
                     setError(message);
                     // Remove the empty placeholder on hard errors
@@ -271,7 +381,8 @@ function useChat() {
         }
     }["useChat.useCallback[sendMessage]"], [
         selectedModel,
-        selectedPersona
+        selectedPersona,
+        buildAndSaveChat
     ]);
     return {
         messages,
@@ -280,14 +391,18 @@ function useChat() {
         selectedModel,
         selectedPersona,
         currentChatId,
+        allChats,
         setSelectedModel,
         setPersona,
+        setModel,
         sendMessage,
         cancelStream,
-        newChat
+        newChat,
+        loadChat,
+        deleteChat
     };
 }
-_s(useChat, "SOnq5QYsQfSrBWQCLfYKTtIajnw=");
+_s(useChat, "GI2azampA3UyziQkL7vvrgnYRFU=");
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
 }
@@ -1170,8 +1285,20 @@ var _s = __turbopack_context__.k.signature();
 const SIDEBAR_WIDTH = 280;
 function Home() {
     _s();
-    const { messages, isStreaming, sendMessage, cancelStream, newChat, selectedModel, selectedPersona, setPersona } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$useChat$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useChat"])();
+    const { messages, isStreaming, sendMessage, cancelStream, newChat, selectedModel, selectedPersona, currentChatId, allChats, setPersona, setModel, loadChat, deleteChat } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$useChat$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useChat"])();
     const [sidebarOpen, setSidebarOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
+    const [models, setModels] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "Home.useEffect": ()=>{
+            fetch('/api/models').then({
+                "Home.useEffect": (res)=>res.json()
+            }["Home.useEffect"]).then({
+                "Home.useEffect": (data)=>setModels(data.models)
+            }["Home.useEffect"]).catch({
+                "Home.useEffect": ()=>{}
+            }["Home.useEffect"]);
+        }
+    }["Home.useEffect"], []);
     return(// Full-viewport shell
     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "flex h-screen overflow-hidden",
@@ -1195,24 +1322,24 @@ function Home() {
                 },
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$Sidebar$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
                     isOpen: sidebarOpen,
-                    chats: [],
+                    chats: allChats,
                     activePersona: selectedPersona,
                     activeModel: selectedModel,
-                    activeChatId: "",
-                    models: [],
+                    activeChatId: currentChatId,
+                    models: models,
                     onNewChat: newChat,
-                    onSelectChat: ()=>{},
-                    onDeleteChat: ()=>{},
+                    onSelectChat: loadChat,
+                    onDeleteChat: deleteChat,
                     onSelectPersona: setPersona,
-                    onSelectModel: ()=>{}
+                    onSelectModel: setModel
                 }, void 0, false, {
                     fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 41,
+                    lineNumber: 54,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 32,
+                lineNumber: 45,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$components$2f$AnimatePresence$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["AnimatePresence"], {
@@ -1238,7 +1365,7 @@ function Home() {
                             onClick: ()=>setSidebarOpen(false)
                         }, "backdrop", false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 61,
+                            lineNumber: 74,
                             columnNumber: 13
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].aside, {
@@ -1264,34 +1391,37 @@ function Home() {
                             },
                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$Sidebar$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
                                 isOpen: sidebarOpen,
-                                chats: [],
+                                chats: allChats,
                                 activePersona: selectedPersona,
                                 activeModel: selectedModel,
-                                activeChatId: "",
-                                models: [],
+                                activeChatId: currentChatId,
+                                models: models,
                                 onNewChat: ()=>{
                                     newChat();
                                     setSidebarOpen(false);
                                 },
-                                onSelectChat: ()=>{},
-                                onDeleteChat: ()=>{},
+                                onSelectChat: (id)=>{
+                                    loadChat(id);
+                                    setSidebarOpen(false);
+                                },
+                                onDeleteChat: deleteChat,
                                 onSelectPersona: setPersona,
-                                onSelectModel: ()=>{}
+                                onSelectModel: setModel
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 86,
+                                lineNumber: 99,
                                 columnNumber: 15
                             }, this)
                         }, "drawer", false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 73,
+                            lineNumber: 86,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true)
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 57,
+                lineNumber: 70,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1313,7 +1443,7 @@ function Home() {
                                 children: "☰"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 114,
+                                lineNumber: 130,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1324,13 +1454,13 @@ function Home() {
                                 children: "TwinAI"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 122,
+                                lineNumber: 138,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 110,
+                        lineNumber: 126,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1341,7 +1471,7 @@ function Home() {
                                 isStreaming: isStreaming
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 132,
+                                lineNumber: 148,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1352,34 +1482,34 @@ function Home() {
                                     onCancel: cancelStream
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 136,
+                                    lineNumber: 152,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 135,
+                                lineNumber: 151,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 131,
+                        lineNumber: 147,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 108,
+                lineNumber: 124,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/page.tsx",
-        lineNumber: 27,
+        lineNumber: 40,
         columnNumber: 5
     }, this));
 }
-_s(Home, "fzWWpsBENCUMYcUYUsIFjupvwIg=", false, function() {
+_s(Home, "BhSA8K2hJKUxTk7Ml2PKRGmr5LQ=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$useChat$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useChat"]
     ];

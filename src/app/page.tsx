@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useChat } from "@/hooks/useChat";
 import ChatWindow from "@/components/ChatWindow";
@@ -18,9 +18,22 @@ export default function Home() {
     newChat,
     selectedModel,
     selectedPersona,
+    currentChatId,
+    allChats,
     setPersona,
+    setModel,
+    loadChat,
+    deleteChat,
   } = useChat();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [models, setModels] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch('/api/models')
+      .then((res) => res.json() as Promise<{ models: string[] }>)
+      .then((data) => setModels(data.models))
+      .catch(() => {});
+  }, []);
 
   return (
     // Full-viewport shell
@@ -40,16 +53,16 @@ export default function Home() {
       >
         <Sidebar
           isOpen={sidebarOpen}
-          chats={[]}
+          chats={allChats}
           activePersona={selectedPersona}
           activeModel={selectedModel}
-          activeChatId=""
-          models={[]}
+          activeChatId={currentChatId}
+          models={models}
           onNewChat={newChat}
-          onSelectChat={() => {}}
-          onDeleteChat={() => {}}
+          onSelectChat={loadChat}
+          onDeleteChat={deleteChat}
           onSelectPersona={setPersona}
-          onSelectModel={() => {}}
+          onSelectModel={setModel}
         />
       </motion.aside>
 
@@ -85,19 +98,22 @@ export default function Home() {
             >
               <Sidebar
                 isOpen={sidebarOpen}
-                chats={[]}
+                chats={allChats}
                 activePersona={selectedPersona}
                 activeModel={selectedModel}
-                activeChatId=""
-                models={[]}
+                activeChatId={currentChatId}
+                models={models}
                 onNewChat={() => {
                   newChat();
                   setSidebarOpen(false);
                 }}
-                onSelectChat={() => {}}
-                onDeleteChat={() => {}}
+                onSelectChat={(id) => {
+                  loadChat(id);
+                  setSidebarOpen(false);
+                }}
+                onDeleteChat={deleteChat}
                 onSelectPersona={setPersona}
-                onSelectModel={() => {}}
+                onSelectModel={setModel}
               />
             </motion.aside>
           </>

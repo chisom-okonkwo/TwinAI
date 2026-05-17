@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Message, Persona, StreamChunk } from "@/lib/types";
-import { DEFAULT_PERSONAS } from "@/lib/utils";
+import type { Chat, Message, Persona, StreamChunk } from "@/lib/types";
+import { DEFAULT_PERSONAS, generateChatTitle } from "@/lib/utils";
+
+const STORAGE_KEY = "twinai-chats";
 
 type UseChatReturn = {
   messages: Message[];
@@ -11,11 +13,15 @@ type UseChatReturn = {
   selectedModel: string;
   selectedPersona: Persona;
   currentChatId: string;
+  allChats: Chat[];
   setSelectedModel: (model: string) => void;
   setPersona: (persona: Persona) => void;
+  setModel: (model: string) => void;
   sendMessage: (content: string) => Promise<void>;
   cancelStream: () => void;
   newChat: () => void;
+  loadChat: (id: string) => void;
+  deleteChat: (id: string) => void;
 };
 
 export function useChat(): UseChatReturn {
@@ -27,16 +33,66 @@ export function useChat(): UseChatReturn {
   const [currentChatId, setCurrentChatId] = useState<string>(() =>
     crypto.randomUUID()
   );
+  const [allChats, setAllChats] = useState<Chat[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as Chat[]) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Refs so callbacks never go stale without needing broad dep arrays
   const messagesRef = useRef<Message[]>([]);
   const isStreamingRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const allChatsRef = useRef<Chat[]>(allChats);
+  const currentChatIdRef = useRef<string>(currentChatId);
 
-  // Keep messagesRef in sync
+  // Keep refs in sync
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+  useEffect(() => {
+    allChatsRef.current = allChats;
+  }, [allChats]);
+  useEffect(() => {
+    currentChatIdRef.current = currentChatId;
+  }, [currentChatId]);
+
+  // ── persistChats ─────────────────────────────────────────────────────────────
+  const persistChats = useCallback((updatedChats: Chat[]): void => {
+    setAllChats(updatedChats);
+    if (saveTimerRef.current !== null) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedChats));
+    }, 300);
+  }, []);
+
+  // ── buildAndSaveChat ──────────────────────────────────────────────────────────
+  const buildAndSaveChat = useCallback((): void => {
+    const currentMessages = messagesRef.current;
+    const chatId = currentChatIdRef.current;
+    const existingChat = allChatsRef.current.find((c) => c.id === chatId);
+    const firstUserMessage = currentMessages.find((m) => m.role === "user");
+
+    const chat: Chat = {
+      id: chatId,
+      title: generateChatTitle(firstUserMessage?.content ?? "New chat"),
+      messages: currentMessages,
+      personaId: selectedPersona.id,
+      model: selectedModel,
+      createdAt: existingChat?.createdAt ?? Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    const updated = existingChat
+      ? allChatsRef.current.map((c) => (c.id === chatId ? chat : c))
+      : [...allChatsRef.current, chat];
+
+    persistChats(updated);
+  }, [selectedModel, selectedPersona, persistChats]);
 
   // ── cancelStream ────────────────────────────────────────────────────────────
   const cancelStream = useCallback(() => {
@@ -50,6 +106,34 @@ export function useChat(): UseChatReturn {
     setIsStreaming(false);
     setError(null);
     setCurrentChatId(crypto.randomUUID());
+  }, []);
+
+  // ── loadChat ──────────────────────────────────────────────────────────────────
+  const loadChat = useCallback((id: string): void => {
+    const chat = allChatsRef.current.find((c) => c.id === id);
+    if (!chat) return;
+    setMessages(chat.messages);
+    setSelectedModel(chat.model);
+    setCurrentChatId(chat.id);
+    const persona =
+      DEFAULT_PERSONAS.find((p) => p.id === chat.personaId) ??
+      DEFAULT_PERSONAS[0];
+    setPersona(persona);
+  }, []);
+
+  // ── deleteChat ────────────────────────────────────────────────────────────────
+  const deleteChat = useCallback(
+    (id: string): void => {
+      const filtered = allChatsRef.current.filter((c) => c.id !== id);
+      persistChats(filtered);
+      if (id === currentChatIdRef.current) newChat();
+    },
+    [persistChats, newChat]
+  );
+
+  // ── setModel ──────────────────────────────────────────────────────────────────
+  const setModel = useCallback((model: string): void => {
+    setSelectedModel(model);
   }, []);
 
   // ── sendMessage ──────────────────────────────────────────────────────────────
@@ -167,6 +251,7 @@ export function useChat(): UseChatReturn {
             msg.id === assistantId ? { ...msg, isStreaming: false } : msg
           )
         );
+        buildAndSaveChat();
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
           // User cancelled — freeze the assistant message as-is
@@ -176,6 +261,7 @@ export function useChat(): UseChatReturn {
             )
           );
         } else {
+          buildAndSaveChat();
           const message =
             err instanceof Error ? err.message : "An unknown error occurred.";
           setError(message);
@@ -189,7 +275,7 @@ export function useChat(): UseChatReturn {
         abortControllerRef.current = null;
       }
     },
-    [selectedModel, selectedPersona]
+    [selectedModel, selectedPersona, buildAndSaveChat]
   );
 
   return {
@@ -199,10 +285,14 @@ export function useChat(): UseChatReturn {
     selectedModel,
     selectedPersona,
     currentChatId,
+    allChats,
     setSelectedModel,
     setPersona,
+    setModel,
     sendMessage,
     cancelStream,
     newChat,
+    loadChat,
+    deleteChat,
   };
 }

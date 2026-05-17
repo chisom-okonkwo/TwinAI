@@ -1,2 +1,4 @@
 {"timestamp":"00:00:00.572","source":"Server","level":"WARN","message":"⚠ Turbopack's filesystem cache has been deleted because we previously detected an internal error in Turbopack. Builds or page loads may be slower as a result."}
 {"timestamp":"00:00:00.719","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:08:26.391","source":"Server","level":"LOG","message":"✓ Compiled in 467ms"}
+{"timestamp":"00:14:16.706","source":"Server","level":"LOG","message":"✓ Compiled in 244ms"}
